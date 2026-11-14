@@ -514,9 +514,7 @@ Scope {
     // automatic location (IP): ipwho.is, falling back to ipapi.co
     Process {
         id: locProc
-        command: ["sh", "-c",
-            "o=$(curl -fsS --max-time 8 https://ipwho.is/ 2>/dev/null); "
-            + "case \"$o\" in *'\"latitude\"'*) printf '%s' \"$o\";; *) curl -fsS --max-time 8 https://ipapi.co/json/;; esac"]
+        command: [Quickshell.env("HOME") + "/.local/libexec/macshell-geolocation.py"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -526,7 +524,7 @@ Scope {
                     root.wxPlace = o.city || o.region || o.country || "Current Location";
                     root.wxLocated = true;
                     wxProc.running = true;
-                } catch (err) { root.wxError = "location lookup failed"; console.log("[macwidgets] location:", err, text.substring(0, 120)); }
+                } catch (err) { root.wxError = "location lookup failed"; console.log("[macwidgets] location unavailable, using saved city"); if (root.cityName.trim() !== "") geoProc.running = true; }
             }
         }
     }

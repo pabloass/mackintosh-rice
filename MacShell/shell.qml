@@ -278,7 +278,7 @@ ShellRoot {
             for (j = 0; j < cl.length; j++) {
                 c = cl[j]; at = c.at; sz = c.size;
                 key += c.address + "," + (at ? at[0] + "," + at[1] : "") + "," + (sz ? sz[0] + "," + sz[1] : "") + ","
-                     + (c.workspace ? c.workspace.id : 0) + "," + c.monitor + "," + (c.floating ? 1 : 0) + "," + c.fullscreen + ","
+                     + (c.workspace ? (c.workspace.name || c.workspace.id || "") : "") + "," + c.monitor + "," + (c.floating ? 1 : 0) + "," + c.fullscreen + ","
                      + (c.mapped ? 1 : 0) + (c.hidden ? 1 : 0) + ";";
             }
             if (key === geoLast) return;

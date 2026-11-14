@@ -73,7 +73,7 @@ Scope {
         r.push({ k: I18n.tr("Memory"), v: o.mem || "", s: "" });
         r.push({ k: I18n.tr("Storage"), v: o.disk || "", s: o.disksub || "" });
         r.push({ k: I18n.tr("Kernel"), v: o.kernel || "", s: "" });
-        r.push({ k: o.osname || "Linux", v: o.osver || "", s: "" });
+        r.push({ k: o.osname || "Система", v: o.osver || "", s: "" });
         return r;
     }
 
@@ -90,7 +90,7 @@ Scope {
 
     Window {
         id: win
-        title: "About This Linux"
+        title: "About This Mac"
         readonly property real uiS: root.bar ? root.bar.uiScale : 1      // UI scale (Settings → Menu Bar)
         readonly property int wantH: Math.round((Math.ceil(content.implicitHeight) + 40 + 26) * uiS)
         width: Math.round(300 * uiS)
@@ -251,7 +251,7 @@ Scope {
                     wrapMode: Text.Wrap
                     maximumLineCount: 2
                     elide: Text.ElideRight
-                    text: "MacShell"
+                    text: "Mackintosh"
                     color: pal.text
                     font.family: root.fontForWeight(Font.Bold, root.fam); font.pixelSize: 24; font.weight: Font.Bold
                 }
@@ -333,7 +333,7 @@ Scope {
                     Text {
                         id: siteTxt
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: (root.info.osname || "Linux") + " " + I18n.tr("Website")
+                        text: I18n.tr("Website")
                         color: pal.text2
                         font.family: root.fontForWeight(Font.Normal, root.fam); font.pixelSize: 11; font.underline: true
                         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["xdg-open", root.info.home || "https://www.kernel.org"]) }
@@ -344,7 +344,7 @@ Scope {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
-                    text: "Linux® is a registered trademark of Linus Torvalds.\nMacShell 0.5.1"
+                    text: "Mackintosh"
                     color: pal.text3
                     font.family: root.fontForWeight(Font.Normal, root.fam); font.pixelSize: 10
                     lineHeight: 1.1

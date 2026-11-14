@@ -125,7 +125,7 @@ Item {
     // capture draws. MACSHELL_KEEP=0 (environment) switches it off again if it ever misbehaves.
     ShaderEffectSource {
         id: keep
-        readonly property bool on: glassCap.fx ? Quickshell.env("MACSHELL_KEEP") !== "0" : Quickshell.env("MACSHELL_KEEP") === "1"
+        readonly property bool on: false
         anchors.fill: parent
         z: -1
         sourceItem: on ? cap : null

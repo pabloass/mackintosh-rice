@@ -1,0 +1,98 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "source": "macOS",
+    "color": {
+      "1": "#d8c5e8",
+      "2": "#d8c5e8",
+      "3": "#d8c5e8",
+      "4": "#d8c5e8",
+      "5": "#d8c5e8",
+      "6": "#d8c5e8",
+      "7": "#d8c5e8",
+      "8": "#d8c5e8",
+      "9": "#d8c5e8"
+    },
+    "padding": {
+      "top": 0,
+      "left": 1,
+      "right": 2
+    }
+  },
+  "display": {
+    "color": {
+      "keys": "#d8c5e8",
+      "title": "#eadcf3",
+      "separator": "#b7aac2",
+      "output": "#ece8f0"
+    },
+    "separator": "  ",
+    "brightColor": false
+  },
+  "modules": [
+    "title",
+    "separator",
+    {
+      "type": "os",
+      "key": "Система",
+      "format": "Mackintosh"
+    },
+    {
+      "type": "host",
+      "key": "Компьютер"
+    },
+    {
+      "type": "kernel",
+      "key": "Ядро",
+      "format": "{release}"
+    },
+    {
+      "type": "uptime",
+      "key": "Время работы"
+    },
+    {
+      "type": "packages",
+      "key": "Пакеты"
+    },
+    {
+      "type": "shell",
+      "key": "Оболочка"
+    },
+    {
+      "type": "terminal",
+      "key": "Терминал"
+    },
+    {
+      "type": "display",
+      "key": "Экран"
+    },
+    {
+      "type": "wm",
+      "key": "Оконный менеджер"
+    },
+    {
+      "type": "theme",
+      "key": "Тема"
+    },
+    {
+      "type": "icons",
+      "key": "Иконки"
+    },
+    {
+      "type": "cpu",
+      "key": "Процессор"
+    },
+    {
+      "type": "gpu",
+      "key": "Видеокарта"
+    },
+    {
+      "type": "memory",
+      "key": "Память"
+    },
+    {
+      "type": "disk",
+      "key": "Диск"
+    }
+  ]
+}

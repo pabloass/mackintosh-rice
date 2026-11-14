@@ -3397,7 +3397,7 @@ Scope {
     function menuModelFor(name) {
         var m = [], i;
         if (name === "apple") {
-            m.push(ico(mi("About This Linux", "", function () {
+            m.push(ico(mi("About This Mac", "", function () {
                 if (hub && hub.about) hub.about.open();
                 else sh(terminal + " -e sh -c 'fastfetch || neofetch; echo; read -p \"Press Enter\" _'");
             }), "m_about"));
@@ -3513,7 +3513,7 @@ Scope {
                 m.push(mchk("Dark Mode", "", root.darkMode, function () { root.setAppearance(root.darkMode ? "light" : "dark"); }));
             } else if (name === "window") {
                 if (has) {
-                    m.push(mi("Minimize", "", disp('hl.dsp.window.move({ workspace = "special:minimized", follow = false })')));
+                    m.push(mi("Minimize", "", function () { Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/macshell-genie-click", "--active"]); }));
                     m.push(mchk("Zoom", "", fsMode === 1, disp('hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" })')));
                     m.push(mi(floating ? "Tile Window" : "Float Window", "", disp('hl.dsp.window.float({ action = "toggle" })')));
                     m.push(msep());
@@ -5385,14 +5385,14 @@ Scope {
                             for (i = 0; i < root.monData.length; i++)
                                 if (root.monData[i].name === win.modelData.name) mon = root.monData[i];
                             if (!mon) return;
-                            var ws = [mon.activeWorkspace ? mon.activeWorkspace.id : -999];
-                            if (mon.specialWorkspace && mon.specialWorkspace.id !== 0) ws.push(mon.specialWorkspace.id);
+                            var ws = [mon.activeWorkspace ? String(mon.activeWorkspace.name || mon.activeWorkspace.id || "") : ""];
+                            if (mon.specialWorkspace && mon.specialWorkspace.name) ws.push(String(mon.specialWorkspace.name));
                             var zoneBottom = bd.height;
                             var want = {};
                             var cs = root.glassClients;
                             for (var c = 0; c < cs.length; c++) {
                                 var cl = cs[c];
-                                if (!cl.mapped || cl.hidden || cl.monitor !== mon.id || ws.indexOf(cl.workspace.id) < 0) continue;
+                                if (!cl.mapped || cl.hidden || cl.monitor !== mon.id || ws.indexOf(String(cl.workspace.name || cl.workspace.id || "")) < 0) continue;
                                 var x = cl.at[0] - mon.x, y = cl.at[1] - mon.y, w = cl.size[0], h = cl.size[1];
                                 if (x + w <= 0 || x >= bd.width || y + h <= 0 || y >= zoneBottom) continue;
                                 var z = cl.floating ? 100 - Math.min(cl.focusHistoryID, 90) : 0;
@@ -8225,7 +8225,7 @@ Scope {
                     // macOS Control Center: one frosted slab behind everything (the tiles sit on it, instead of each
                     // control being its own piece of glass)
                     Loader {
-                        active: root.ccStyle === "macos"
+                        active: root.ccStyle === "macos" && ui.ccPage !== ""
                         x: -12; y: -12
                         width: cc.width + 24; height: cc.height + 24
                         sourceComponent: Item {
@@ -8584,7 +8584,7 @@ Scope {
                     else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) { root.swCommit(); event.accepted = true; }
                 }
                 Keys.onReleased: event => {
-                    if (event.key === Qt.Key_Alt && !event.isAutoRepeat) { root.swCommit(); event.accepted = true; }
+                    if ((event.key === Qt.Key_Alt || event.key === Qt.Key_Meta) && !event.isAutoRepeat) { root.swCommit(); event.accepted = true; }
                 }
 
                 Loader {

@@ -207,6 +207,32 @@ Scope {
     property bool iconTint: false
     property string iconTintColor: "#0a84ff"
     property real iconTintStrength: 1.0
+    property real tintLastHue: 0.58
+    onIconTintColorChanged: { var hsv = tintHSV(); if (hsv[1] > 0.001) tintLastHue = hsv[0]; }
+    // RGB/HSV conversion keeps the existing #RRGGBB setting compatible with MacShell updates.
+    function tintHSV() {
+        var hex = String(iconTintColor).replace("#", "");
+        var r = parseInt(hex.slice(0, 2), 16) / 255;
+        var g = parseInt(hex.slice(2, 4), 16) / 255;
+        var b = parseInt(hex.slice(4, 6), 16) / 255;
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return [0, 0, 1];
+        var max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min, h = tintLastHue;
+        if (delta > 0) {
+            if (max === r) h = ((g - b) / delta + 6) % 6;
+            else if (max === g) h = (b - r) / delta + 2;
+            else h = (r - g) / delta + 4;
+            h /= 6;
+        }
+        return [h, max === 0 ? 0 : delta / max, max];
+    }
+    function setTintHSV(h, sat) {
+        h = ((h % 1) + 1) % 1; tintLastHue = h; sat = Math.max(0, Math.min(1, sat));
+        var val = Math.max(tintHSV()[2], 0.25), i = Math.floor(h * 6), f = h * 6 - i;
+        var p = val * (1 - sat), q = val * (1 - f * sat), t = val * (1 - (1 - f) * sat);
+        var rgb = [[val,t,p], [q,val,p], [p,val,t], [p,q,val], [t,p,val], [val,p,q]][i % 6];
+        function component(x) { return ("0" + Math.round(x * 255).toString(16)).slice(-2); }
+        iconTintColor = "#" + component(rgb[0]) + component(rgb[1]) + component(rgb[2]);
+    }
     readonly property var tintChoices: [
         { name: "Blue",     c: "#0a84ff" }, { name: "Purple", c: "#bf5af2" }, { name: "Pink",  c: "#ff375f" },
         { name: "Red",      c: "#ff453a" }, { name: "Orange", c: "#ff9f0a" }, { name: "Yellow", c: "#ffd60a" },
@@ -2138,6 +2164,32 @@ Scope {
                                     onEditingFinished: { if (/^#[0-9a-fA-F]{6}$/.test(text)) root.iconTintColor = text.toLowerCase(); else text = root.iconTintColor; }
                                 }
                             }
+                        }
+                    }
+                    SRow {
+                        t: pal
+                        title: I18n.tr("Hue")
+                        opacity: root.iconTint ? 1 : 0.45
+                        SSlider {
+                            t: pal; enabled: root.iconTint
+                            from: 0; to: 359; stepSize: 1
+                            value: Math.round(root.tintHSV()[0] * 359)
+                            leftLabel: I18n.tr("Red"); rightLabel: I18n.tr("Red")
+                            resetValue: 210
+                            onMoved: v => root.setTintHSV(v / 360, Math.max(root.tintHSV()[1], 0.15))
+                        }
+                    }
+                    SRow {
+                        t: pal
+                        title: I18n.tr("Saturation")
+                        opacity: root.iconTint ? 1 : 0.45
+                        SSlider {
+                            t: pal; enabled: root.iconTint
+                            from: 0; to: 1; stepSize: 0.01
+                            value: root.tintHSV()[1]
+                            leftLabel: I18n.tr("Gray"); rightLabel: I18n.tr("Vivid")
+                            resetValue: 1
+                            onMoved: v => root.setTintHSV(root.tintHSV()[0], v)
                         }
                     }
                     SRow {
@@ -4084,7 +4136,7 @@ Scope {
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     topPadding: 4
-                    text: I18n.tr("Designed by Rick.\nRebuilt on Linux by two people who could not afford the Mac.")
+                    text: I18n.tr("Designed by Rick.")
                     color: pal.text3; font.family: root.fontForWeight(Font.Normal, pal.fam); font.pixelSize: 11
                 }
 
@@ -4180,13 +4232,17 @@ Scope {
             for (var i = 0; i < prefsWindow.panes.length; i++)
                 if (prefsWindow.panes[i].id === pane) { prefsWindow.go(i); break; }
         }
+        // A visible Qt window can still be on Hyprland's hidden workspace.
+        // Move an existing settings window to the current workspace before activating it.
+        if (prefsWindow.visible)
+            Hyprland.dispatch('hl.dsp.window.move({ window = "title:^(macshell Settings)$", workspace = hl.get_active_workspace(), follow = true })');
         prefsWindow.visible = true;
         prefsWindow.requestActivate();
     }
 
     function togglePrefs(pane) {
-        if (prefsWindow.visible) prefsWindow.visible = false;
-        else openPrefs(pane);
+        // Always reveal Settings; the window's own close button closes it.
+        openPrefs(pane);
     }
 
     function resetPins() {
@@ -4305,12 +4361,48 @@ Scope {
         return Quickshell.iconPath(icon, "application-x-executable");
     }
     // icon of a dock cell; the Trash switches to the "full" icon while there is something in it
-    function cellIconSrc(it) {
-        if (it && it.special === "trash" && trashFull) {
-            var p = Quickshell.iconPath("user-trash-full", true);
-            if (p !== "") return p;
+    property var normalizedDockIcons: ({})
+    property var dockIconRequested: ({})
+    Timer {
+        id: normalizeDockIconsTimer
+        interval: 350
+        onTriggered: {
+            if (normalizeDockIcons.running) { restart(); return; }
+            var names = ["user-trash-full"];
+            for (var i = 0; i < root.items.length; i++) {
+                var it = root.items[i];
+                if (it && it.kind === "app" && it.icon) names.push(String(it.icon));
+            }
+            var missing = [], seen = {};
+            for (var n = 0; n < names.length; n++) {
+                var name = names[n];
+                if (!seen[name] && !root.dockIconRequested[name] && name.indexOf("://") < 0) {
+                    seen[name] = true; missing.push(name);
+                }
+            }
+            if (!missing.length) return;
+            var requested = Object.assign({}, root.dockIconRequested);
+            for (var j = 0; j < missing.length; j++) requested[missing[j]] = true;
+            root.dockIconRequested = requested;
+            normalizeDockIcons.command = [Quickshell.env("HOME") + "/.local/libexec/macshell-dock-icons.py"].concat(missing);
+            normalizeDockIcons.running = true;
         }
-        return iconSrc(it ? it.icon : "");
+    }
+    Process {
+        id: normalizeDockIcons
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root.normalizedDockIcons = Object.assign({}, root.normalizedDockIcons, JSON.parse(text)); }
+                catch (e) { console.log("[dock icons]", e); }
+            }
+        }
+    }
+    onItemsChanged: normalizeDockIconsTimer.restart()
+    function cellIconSrc(it) {
+        var name = it && it.special === "trash" && trashFull ? "user-trash-full" : (it ? it.icon : "");
+        var normalized = root.normalizedDockIcons[String(name)];
+        if (normalized) return "file://" + normalized;
+        return iconSrc(name);
     }
 
     // ── Trash state: the standard XDG trash (~/.local/share/Trash/files) is what Dolphin's trash:/ shows ──
@@ -4381,7 +4473,7 @@ Scope {
         return out;
     }
 
-    function activate(item, forceNew) {
+    function activate(item, forceNew, genieTarget) {
         if (item.kind === "win") { if (item.tl) item.tl.activate(); return; }
         if (item.special === "apps") { if (bar) bar.spotOpen("apps"); return; }
         if (item.special === "trash") {
@@ -4395,8 +4487,16 @@ Scope {
         var wins = windowsFor(item.key);
         if (wins.length > 0 && !forceNew) {
             var idx = -1;
-            for (var i = 0; i < wins.length; i++) if (wins[i].activated) idx = i;
-            wins[(idx + 1) % wins.length].activate();
+            for (var i = 0; i < wins.length; i++) if (wins[i].activated) { idx = i; break; }
+            var chosen = wins[idx >= 0 ? idx : 0];
+            var hs = Hyprland.toplevels.values, h = null;
+            for (var j = 0; j < hs.length; j++) if (hs[j].wayland === chosen) { h = hs[j]; break; }
+            var address = h ? String(h.address).replace(/^0x/, "") : "";
+            if (/^[0-9a-fA-F]+$/.test(address)) {
+                var args = [Quickshell.env("HOME") + "/.local/bin/macshell-genie-click", "0x" + address];
+                if (genieTarget) args = args.concat([String(Math.round(genieTarget.x)), String(Math.round(genieTarget.y)), String(Math.round(genieTarget.w)), String(Math.round(genieTarget.h))]);
+                Quickshell.execDetached(args);
+            } else chosen.activate();
             return;
         }
         if (item.entry || item.key) {
@@ -5446,14 +5546,14 @@ Scope {
                             for (var i = 0; i < root.monData.length; i++)
                                 if (root.monData[i].name === win.modelData.name) mon = root.monData[i];
                             if (!mon) return;
-                            var ws = [mon.activeWorkspace ? mon.activeWorkspace.id : -999];
-                            if (mon.specialWorkspace && mon.specialWorkspace.id !== 0) ws.push(mon.specialWorkspace.id);
+                            var ws = [mon.activeWorkspace ? String(mon.activeWorkspace.name || mon.activeWorkspace.id || "") : ""];
+                            if (mon.specialWorkspace && mon.specialWorkspace.name) ws.push(String(mon.specialWorkspace.name));
                             var zoneTop = bd.height - win.height;
                             var want = {};
                             var cs = root.glassClients;
                             for (var c = 0; c < cs.length; c++) {
                                 var cl = cs[c];
-                                if (!cl.mapped || cl.hidden || cl.monitor !== mon.id || ws.indexOf(cl.workspace.id) < 0) continue;
+                                if (!cl.mapped || cl.hidden || cl.monitor !== mon.id || ws.indexOf(String(cl.workspace.name || cl.workspace.id || "")) < 0) continue;
                                 var x = cl.at[0] - mon.x, y = cl.at[1] - mon.y, w = cl.size[0], h = cl.size[1];
                                 if (x + w <= 0 || x >= bd.width || y + h <= zoneTop || y >= bd.height) continue;
                                 var z = cl.floating ? 100 - Math.min(cl.focusHistoryID, 90) : 0;   // floating on top, most recently focused highest
@@ -5809,7 +5909,7 @@ Scope {
 
                                 Image {
                                     id: img
-                                    visible: false
+                                    visible: !cell.isSep && !cell.thumbReady
                                     property real lift: 0
                                     // icon art drawn at ~99%: the dock and the cells keep their size. Whole pixels only: at rest this was
                                     // 51.48 px wide and centred on a fractional x, so the GPU re-sampled the icon texture (blurry) until the
@@ -5820,22 +5920,27 @@ Scope {
                                     anchors.bottom: parent.bottom
                                     anchors.bottomMargin: Math.round(lift)
                                     source: cell.isSep ? "" : root.cellIconSrc(cell.modelData)
-                                    sourceSize: Qt.size(Math.ceil(root.iconSize * root.magnification * 1.25),
-                                                        Math.ceil(root.iconSize * root.magnification * 1.25))
+                                    sourceSize: Qt.size(Math.max(256, Math.ceil(root.iconSize * root.magnification * 2)),
+                                                        Math.max(256, Math.ceil(root.iconSize * root.magnification * 2)))
                                     fillMode: Image.PreserveAspectFit
                                     smooth: true
-                                    mipmap: true
+                                    mipmap: false
                                     asynchronous: true
                                 }
+                                ShaderEffectSource {
+                                    id: iconTexture
+                                    sourceItem: img
+                                    hideSource: root.iconTint
+                                    live: root.iconTint
+                                    visible: false
+                                    smooth: true
+                                    textureSize: Qt.size(Math.max(1, Math.ceil(img.width * 2)), Math.max(1, Math.ceil(img.height * 2)))
+                                }
                                 MultiEffect {
-                                    visible: !cell.isSep && !cell.thumbReady
-                                    source: img
+                                    visible: !cell.isSep && !cell.thumbReady && root.iconTint
+                                    source: iconTexture
                                     anchors.fill: img
-                                    shadowEnabled: true
-                                    shadowColor: "black"
-                                    shadowOpacity: 0.32
-                                    shadowBlur: 0.55
-                                    shadowVerticalOffset: 3
+                                    shadowEnabled: false
                                     // icon tint: desaturate, then colourise (no shader build needed)
                                     saturation: root.iconTint ? -0.75 * root.iconTintStrength : 0.0
                                     colorization: root.iconTint ? 1.0 * root.iconTintStrength : 0.0
@@ -6066,7 +6171,12 @@ Scope {
                                             ui.menuItem = cell.modelData;
                                             ui.syncMenu();
                                         } else {
-                                            root.activate(cell.modelData, mouse.button === Qt.MiddleButton);
+                                            var gp = img.mapToItem(ui, 0, 0);
+                                            root.activate(cell.modelData, mouse.button === Qt.MiddleButton, {
+                                                x: (win.modelData.x || 0) + gp.x,
+                                                y: (win.modelData.y || 0) + win.modelData.height - win.height + gp.y,
+                                                w: img.width, h: img.height
+                                            });
                                         }
                                     }
                                 }

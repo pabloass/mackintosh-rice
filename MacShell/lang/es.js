@@ -41,7 +41,7 @@ var strings = {
     "dddd, MMMM d": "dddd, d MMMM",
 
     // Apple menu, app menus, session
-    "About This Linux": "Acerca de este Linux",
+    "About This Linux": "Acerca de este Mac",
     "Apple menu": "Menú Apple",
     "Application menus": "Menús de aplicación",
     "System Settings…": "Ajustes del sistema…",
@@ -449,7 +449,7 @@ var strings = {
     "Reset…": "Restablecer…",
     "Restore every setting to its default (appearance, Dock, Menu Bar, widgets, lock screen, input). Pinned apps and your widgets' layout are kept.": "Devuelve cada ajuste a su defecto (apariencia, Dock, Barra de menús, widgets, bloqueo, entrada). Se conservan apps fijadas y tus widgets.",
     "Credits": "Créditos",
-    "Designed by Rick.\nRebuilt on Linux by two people who could not afford the Mac.": "Diseñado por Rick.\nReconstruido en Linux por dos personas que no podían pagar el Mac.",
+    "Designed by Rick.\nRebuilt on Linux by two people who could not afford the Mac.": "Diseñado por Rick.\nReconstruido para Mackintosh.",
     "Protect your MacShell with AppleCare+": "Protege tu MacShell con AppleCare+",
     "Unlimited repairs for accidental damage, 24/7 priority access to Apple experts, and battery service coverage. Same price as for a MacBook Pro.": "Reparaciones ilimitadas por daños accidentales, acceso prioritario 24/7 a expertos Apple y cobertura de batería. Mismo precio que un MacBook Pro.",
     "$279.00 for 3 years or $99.99/yr.": "$279.00 por 3 años o $99.99/año.",

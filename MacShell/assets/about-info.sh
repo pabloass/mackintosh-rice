@@ -86,9 +86,9 @@ df -B1 --output=size,avail / 2>/dev/null | awk 'NR==2 {
     function f(b) { if (b >= 1e12) return sprintf("%.1f TB", b/1e12); return sprintf("%d GB", int(b/1e9 + 0.5)) }'
 # ── system ──
 printf 'kernel=%s\n' "$(uname -r)"
-osname="${NAME:-Linux}"
+osname="Система"
 osname=$(printf %s "$osname" | sed -e 's/ GNU\/Linux$//; s/ Linux$//')
-osver="${VERSION:-${VERSION_ID:-}}"
+osver="Mackintosh"
 if [ -z "$osver" ]; then case "${BUILD_ID:-}" in rolling|"") osver="Rolling Release" ;; *) osver="$BUILD_ID" ;; esac; fi
 printf 'osname=%s\nosver=%s\n' "$osname" "$osver"
 printf 'pretty=%s\n' "${PRETTY_NAME:-Linux}"

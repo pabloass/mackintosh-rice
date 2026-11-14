@@ -450,7 +450,7 @@ var strings = {
     "Reset…": "Сбросить…",
     "Restore every setting to its default (appearance, Dock, Menu Bar, widgets, lock screen, input). Pinned apps and your widgets' layout are kept.": "Вернуть все настройки по умолчанию (оформление, Dock, строка меню, виджеты, экран блокировки, ввод). Закреплённые приложения и расстановка виджетов сохранятся.",
     "Credits": "Авторы",
-    "Designed by Rick.\nRebuilt on Linux by two people who could not afford the Mac.": "Разработано Rick.\nПересобрано на Linux двумя людьми, которым не хватило на Mac.",
+    "Designed by Rick.\nRebuilt on Linux by two people who could not afford the Mac.": "Разработано Rick.\nПересобрано для Mackintosh.",
     "Protect your MacShell with AppleCare+": "Защитите свой MacShell с AppleCare+",
     "Unlimited repairs for accidental damage, 24/7 priority access to Apple experts, and battery service coverage. Same price as for a MacBook Pro.": "Неограниченный ремонт при случайных повреждениях, круглосуточный приоритетный доступ к экспертам Apple и обслуживание аккумулятора. По цене как для MacBook Pro.",
     "$279.00 for 3 years or $99.99/yr.": "$279.00 за 3 года или $99.99 в год.",

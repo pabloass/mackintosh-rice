@@ -1,0 +1,18 @@
+{
+  "tempUnit": "C",
+  "locMode": "auto",
+  "cityName": "",
+  "widgetScale": 1,
+  "widgets": [
+    {
+      "id": "weather-default",
+      "type": "weather",
+      "style": "liquid",
+      "size": "medium",
+      "mode": "auto",
+      "src": "",
+      "x": 42,
+      "y": 56
+    }
+  ]
+}

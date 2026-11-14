@@ -1,0 +1,28 @@
+#!/bin/sh
+# Activate, minimize, or restore one Dock window using the compositor's current state.
+addr=${1:-}
+shift || true
+if [ "$addr" = "--active" ]; then addr=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'); fi
+case "$addr" in 0x*[!0-9a-fA-F]*|0x|*[!0-9a-fA-Fx]*|'') exit 2;; 0x*) ;; *) exit 2;; esac
+clients=$(hyprctl clients -j 2>/dev/null) || exit 1
+workspace=$(printf '%s' "$clients" | jq -r --arg a "$addr" '.[] | select(.address == $a) | .workspace.name' | head -n1)
+[ -n "$workspace" ] || exit 0
+active=$(hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty')
+if hyprctl hyprglass minimized 2>/dev/null | awk -v addr="$addr" '$1 == addr {found=1} END {exit !found}'; then
+    result=$(hyprctl hyprglass restore "address:$addr" "$@" 2>/dev/null)
+    [ "$result" = ok ] && exit 0
+fi
+case "$workspace" in
+    special:*)
+        hyprctl dispatch "hl.dsp.window.move({window=[[address:$addr]], workspace=hl.get_active_workspace(), follow=true})" >/dev/null
+        ;;
+    *)
+        if [ "$active" = "$addr" ]; then
+            result=$(hyprctl hyprglass minimize "address:$addr" "$@" 2>/dev/null)
+            case "$result" in ok|busy) exit 0;; esac
+            hyprctl dispatch "hl.dsp.window.move({window=[[address:$addr]], workspace=[[special:minimized]], follow=false})" >/dev/null
+        else
+            hyprctl dispatch "hl.dsp.focus({window=[[address:$addr]]})" >/dev/null
+        fi
+        ;;
+esac
